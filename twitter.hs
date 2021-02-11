@@ -19,14 +19,14 @@ How would you solve it?
 
 testString = "aaaabbbcca"
 
-main =  print . getList $ foldl (flip countR) (Counter [] (head testString,1)) (tail testString++" ")
+main =  print . getList $ foldl countR (Counter [] (head testString,1)) (tail testString++" ")
 
 getList (Counter list _) = list
 
 data Counter = Counter [(Char,Int)] (Char,Int) deriving (Show)
 
-countR :: Char -> Counter -> Counter
-countR curr (Counter list tup@(char,count))
+countR :: Counter -> Char -> Counter
+countR (Counter list tup@(char,count)) curr
     | char == curr = Counter list (char, count+1)
     | otherwise = Counter (list ++ [tup]) (curr,1)
 
