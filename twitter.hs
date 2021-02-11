@@ -19,9 +19,12 @@ How would you solve it?
 
 testString = "aaaabbbcca"
 
-main =  print . getList $ foldl countR (Counter [] (head testString,1)) (tail testString++" ")
+main =  print $ doTask testString
 
 getList (Counter list _) = list
+
+doTask::String -> [(Char,Int)]
+doTask (x:xs) = getList $ foldl countR (Counter [] (x,1)) (xs++" ")
 
 data Counter = Counter [(Char,Int)] (Char,Int) deriving (Show)
 
