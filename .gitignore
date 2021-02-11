@@ -1,0 +1,8 @@
+# Ignore all
+*
+# Unignore gitignore
+!\.gitignore
+
+# Unignore haskell and txt files
+!*.hs
+!*.txt
