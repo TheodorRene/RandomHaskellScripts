@@ -2,6 +2,11 @@ module Main where
     main :: IO ()
     main = print "hello"
 
+    userrating   = [[1,0,3,0,0,5,0,0],[0,0,5,4,0,0,4,0],[2,4,0,1,2,0,3,0],[0,2,4,0,5,0,0,4],[1,0,3,0,3,0,0,2]] :: [[Double]]
+
+    valueToOne :: [Double] -> [Double]
+    valueToOne = map (\x -> if x > 0 then 1 else 0) 
+
     
     -- Σ(A-meanA)*(B-meanB)
     meanSumVectorMultiplication avgA avgB a b = sum $ zipWith (*) normalizedA normalizedB
@@ -23,7 +28,7 @@ module Main where
 
     jaccard a b = nrSameItems / nrAllItems
         where nrSameItems = sum  $ zipWith (\x y -> boolToNum (x == y && x /= 0)) a b
-              nrAllItems = sum $ zipWith (\x y -> boolToNum (x == 0 && y == 0)) a b
+              nrAllItems = sum $ zipWith (\x y -> boolToNum (x == 1 || y == 1)) a b
 
     boolToNum True = 1
     boolToNum False = 0
@@ -41,3 +46,7 @@ module Main where
 
     avg l = sum l / fromIntegral (length l)
 
+
+    weightedAverage (vectors,sim) itemIndex = numerator / denominator
+            where numerator = sum $ map (*(sim!!itemIndex)) (vectors !! itemIndex)
+                  denominator = sum sim
