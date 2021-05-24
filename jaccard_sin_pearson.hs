@@ -1,64 +1,85 @@
 module Main where
-    import Data.List(transpose)
 
-    main :: IO ()
-    main = print "hello"
+import Data.List (transpose)
 
-    userrating   = [[1,0,3,0,0,5,0,0],[0,0,5,4,0,0,4,0],[2,4,0,1,2,0,3,0],[0,2,4,0,5,0,0,4],[0,0,4,3,4,2,0,0], [1,0,3,0,3,0,0,2]] :: [[Double]]
-    columns = transpose userrating 
+main :: IO ()
+main = print "hello"
 
-    six = userrating !! 5
+userrating =
+  [ [1, 0, 3, 0, 0, 5, 0, 0],
+    [0, 0, 5, 4, 0, 0, 4, 0],
+    [2, 4, 0, 1, 2, 0, 3, 0],
+    [0, 2, 4, 0, 5, 0, 0, 4],
+    [0, 0, 4, 3, 4, 2, 0, 0],
+    [1, 0, 3, 0, 3, 0, 0, 2]
+  ] ::
+    [[Double]]
 
-    prettyp :: [[Double]] -> IO ()
-    prettyp = mapM_ print 
+columns = transpose userrating
 
-    userratingBits = map valueToOne userrating
+-- fetch vectors from file
+iouserrrating = map split' . lines <$> readFile "vectors.txt"
 
-    valueToOne :: [Double] -> [Double]
-    valueToOne = map (\x -> if x > 0 then 1 else 0) 
+six = userrating !! 5
 
-    
-    -- Σ(A-meanA)*(B-meanB)
-    meanSumVectorMultiplication avgA avgB a b = sum $ zipWith (*) normalizedA normalizedB
-        where subtractMean average vector = map (subtract average) vector
-              normalizedA = subtractMean avgA a
-              normalizedB = subtractMean avgB b
+prettyp :: [[Double]] -> IO ()
+prettyp = mapM_ print
 
-    -- ΣA*B
-    vectorSumMultiplication = meanSumVectorMultiplication 0 0 
-    
-    cosineSim a b = vectorSumMultiplication a b / (sumLengthVector a * sumLengthVector b)
+split' :: String -> [Double]
+split' str = split str []
 
+split :: String -> [Double] -> [Double]
+split (x : xs) l
+  | x == ',' = split xs l
+  | otherwise = split xs (l ++ [read [x] :: Double])
+split [] l = l
 
-    -- √ΣA²
-    sumLengthVector = sqrt . sum . map (^2)
+-- [Double] -> [Bits] basically
+userratingBits = map valueToOne userrating
 
-    -- √Σ(A-meanA)²
-    meanSumLengthVector average = sumLengthVector . map (subtract average)
+valueToOne :: [Double] -> [Double]
+valueToOne = map (\x -> if x > 0 then 1 else 0)
 
-    jaccard a b = nrSameItems / nrAllItems
-        where nrSameItems = sum  $ zipWith (\x y -> boolToNum (x == y && x /= 0)) a b
-              nrAllItems = sum $ zipWith (\x y -> boolToNum (x == 1 || y == 1)) a b
+-- Σ(A-meanA)*(B-meanB)
+meanSumVectorMultiplication avgA avgB a b = sum $ zipWith (*) normalizedA normalizedB
+  where
+    subtractMean average vector = map (subtract average) vector
+    normalizedA = subtractMean avgA a
+    normalizedB = subtractMean avgB b
 
-    boolToNum True = 1
-    boolToNum False = 0
+-- ΣA*B
+vectorSumMultiplication = meanSumVectorMultiplication 0 0
 
+cosineSim a b = vectorSumMultiplication a b / (sumLengthVector a * sumLengthVector b)
 
-    -- S_xy
-    removeUnratedRecords a b = unzip . filter (uncurry (==)) $ zip a b
+-- √ΣA²
+sumLengthVector = sqrt . sum . map (^ 2)
 
-    removeUnratedRecords2 a b = unzip . filter (\(x, y) -> x /=0.0 && y /= 0.0) $ zip a b
+-- √Σ(A-meanA)²
+meanSumLengthVector average = sumLengthVector . map (subtract average)
 
-    pearson a b = weightedAverage / (meanSumLengthVector avg_a l1 * meanSumLengthVector avg_b l2)
-        where weightedAverage = meanSumVectorMultiplication avg_a avg_b l1 l2
-              normalize aveg = map (subtract aveg)
-              avg_a = avg a
-              avg_b = avg b
-              (l1,l2) = removeUnratedRecords2 a b
+jaccard a b = nrSameItems / nrAllItems
+  where
+    nrSameItems = sum $ zipWith (\x y -> boolToNum (x == y && x /= 0)) a b
+    nrAllItems = sum $ zipWith (\x y -> boolToNum (x == 1 || y == 1)) a b
 
-    avg l = sum l / fromIntegral (length l)
+boolToNum True = 1
+boolToNum False = 0
 
+-- S_xy
+removeUnratedRecords a b = unzip . filter (\(x, y) -> x /= 0.0 && y /= 0.0) $ zip a b
 
-    weightedAverage1 (vectors,sim) itemIndex = numerator / denominator
-            where numerator = sum $ map (*(sim!!itemIndex)) (vectors !! itemIndex)
-                  denominator = sum sim
+pearson a b = weightedAverage / (meanSumLengthVector avg_a l1 * meanSumLengthVector avg_b l2)
+  where
+    weightedAverage = meanSumVectorMultiplication avg_a avg_b l1 l2
+    normalize aveg = map (subtract aveg)
+    avg_a = avg a
+    avg_b = avg b
+    (l1, l2) = removeUnratedRecords a b
+
+avg l = sum l / fromIntegral (length $ filter (/=0) l)
+
+weightedAverage1 (vectors, sim) itemIndex = numerator / denominator
+  where
+    numerator = sum $ map (* (sim !! itemIndex)) (vectors !! itemIndex)
+    denominator = sum sim
