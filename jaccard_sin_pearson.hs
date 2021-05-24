@@ -15,15 +15,25 @@ userrating =
   ] ::
     [[Double]]
 
+userratingSubtractMean :: [[Double]]
+userratingSubtractMean = zipWith fun mean userrating
+    where
+    mean = map avg userrating
+    fun m = map (\num -> if num > 0 then num - m else 0)
+
 columns = transpose userrating
 
 -- fetch vectors from file
 iouserrrating = map split' . lines <$> readFile "vectors.txt"
 
 six = userrating !! 5
+sixMean = userratingSubtractMean !! 5
 
-prettyp :: [[Double]] -> IO ()
-prettyp = mapM_ print
+pearsons1toMany l fullSet = map (pearson l) $ filter (l/=) fullSet
+cosine1ToMany l fullSet = map (cosineSim l) $ filter (l/=) fullSet
+
+pp :: [[Double]] -> IO ()
+pp = mapM_ print
 
 split' :: String -> [Double]
 split' str = split str []
@@ -69,6 +79,7 @@ boolToNum False = 0
 -- S_xy
 removeUnratedRecords a b = unzip . filter (\(x, y) -> x /= 0.0 && y /= 0.0) $ zip a b
 
+-- Bit unsure if this is correct
 pearson a b = weightedAverage / (meanSumLengthVector avg_a l1 * meanSumLengthVector avg_b l2)
   where
     weightedAverage = meanSumVectorMultiplication avg_a avg_b l1 l2
